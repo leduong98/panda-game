@@ -1,0 +1,1137 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>Gấu Trúc Leo Tre</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #a8e6cf 0%, #dcedc8 100%);
+            display: flex;
+            flex-direction: column;
+            min-height: 100vh;
+            overflow: hidden;
+            touch-action: none;
+        }
+
+        .game-container {
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+            width: 100vw;
+        }
+
+        .game-header {
+            background: linear-gradient(135deg, #81c784 0%, #66bb6a 100%);
+            padding: 12px 15px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            color: white;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+        }
+
+        .score-board {
+            display: flex;
+            gap: 15px;
+        }
+
+        .stat {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .stat-label {
+            font-size: 10px;
+            opacity: 0.9;
+            font-weight: 600;
+            letter-spacing: 0.5px;
+        }
+
+        .stat-value {
+            font-size: 18px;
+            font-weight: bold;
+            margin-top: 2px;
+        }
+
+        .lives {
+            display: flex;
+            gap: 4px;
+        }
+
+        .heart {
+            width: 20px;
+            height: 20px;
+            background: #ffcdd2;
+            transform: rotate(45deg);
+            position: relative;
+        }
+
+        .heart::before,
+        .heart::after {
+            content: '';
+            width: 20px;
+            height: 20px;
+            background: #ffcdd2;
+            border-radius: 50%;
+            position: absolute;
+        }
+
+        .heart::before {
+            left: -10px;
+        }
+
+        .heart::after {
+            top: -10px;
+        }
+
+        .game-screen {
+            flex: 1;
+            position: relative;
+            background: linear-gradient(to bottom, #e1f5dc 0%, #c8e6c9 100%);
+            overflow: hidden;
+        }
+
+        #gameCanvas {
+            display: block;
+            width: 100%;
+            height: 100%;
+            touch-action: none;
+        }
+
+        .controls-overlay {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            height: 180px;
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-end;
+            padding: 20px;
+            pointer-events: none;
+        }
+
+        .control-section {
+            pointer-events: all;
+        }
+
+        .vertical-controls {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .horizontal-controls {
+            display: flex;
+            gap: 10px;
+        }
+
+        .control-btn {
+            width: 60px;
+            height: 60px;
+            background: rgba(129, 199, 132, 0.85);
+            border: 3px solid rgba(255, 255, 255, 0.9);
+            border-radius: 15px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 28px;
+            color: white;
+            cursor: pointer;
+            user-select: none;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+            transition: all 0.1s;
+            backdrop-filter: blur(5px);
+        }
+
+        .control-btn:active {
+            transform: scale(0.92);
+            background: rgba(102, 187, 106, 0.95);
+        }
+
+        #startScreen, #gameOverScreen {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(168, 230, 207, 0.98);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            color: #2e7d32;
+            z-index: 10;
+            padding: 20px;
+        }
+
+        .screen-title {
+            font-size: 32px;
+            font-weight: bold;
+            margin-bottom: 15px;
+            text-shadow: 2px 2px 4px rgba(255, 255, 255, 0.5);
+            text-align: center;
+        }
+
+        .screen-subtitle {
+            font-size: 16px;
+            margin-bottom: 20px;
+            opacity: 0.85;
+            text-align: center;
+        }
+
+        .btn {
+            background: linear-gradient(135deg, #66bb6a 0%, #4caf50 100%);
+            color: white;
+            border: none;
+            padding: 15px 35px;
+            font-size: 18px;
+            border-radius: 30px;
+            cursor: pointer;
+            transition: all 0.2s;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+            font-weight: 600;
+        }
+
+        .btn:active {
+            transform: translateY(2px);
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+        }
+
+        .final-score {
+            font-size: 24px;
+            margin: 15px 0;
+            color: #1b5e20;
+            font-weight: bold;
+            text-align: center;
+        }
+
+        .game-instructions {
+            max-width: 90%;
+            text-align: center;
+            margin: 15px 0;
+            line-height: 1.6;
+            font-size: 14px;
+        }
+
+        .instruction-item {
+            margin: 8px 0;
+            padding: 8px 12px;
+            background: rgba(255, 255, 255, 0.5);
+            border-radius: 8px;
+            display: inline-block;
+        }
+
+        .hidden {
+            display: none !important;
+        }
+
+        .speed-indicator {
+            position: absolute;
+            top: 10px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(255, 255, 255, 0.9);
+            padding: 8px 15px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: bold;
+            color: #2e7d32;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+            z-index: 5;
+            display: none;
+        }
+
+        .speed-indicator.show {
+            display: block;
+            animation: pulse 0.5s;
+        }
+
+        @keyframes pulse {
+            0%, 100% { transform: translateX(-50%) scale(1); }
+            50% { transform: translateX(-50%) scale(1.1); }
+        }
+
+        @media (min-width: 768px) {
+            .game-container {
+                max-width: 480px;
+                margin: 0 auto;
+                box-shadow: 0 0 30px rgba(0, 0, 0, 0.2);
+            }
+            
+            .screen-title {
+                font-size: 38px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="game-container">
+        <div class="game-header">
+            <div class="score-board">
+                <div class="stat">
+                    <div class="stat-label">ĐIỂM</div>
+                    <div class="stat-value" id="score">0</div>
+                </div>
+                <div class="stat">
+                    <div class="stat-label">THỜI GIAN</div>
+                    <div class="stat-value" id="time">0s</div>
+                </div>
+                <div class="stat">
+                    <div class="stat-label">TỐC ĐỘ</div>
+                    <div class="stat-value" id="speed">1x</div>
+                </div>
+            </div>
+            <div class="stat">
+                <div class="stat-label">MẠNG</div>
+                <div class="lives" id="lives">
+                    <div class="heart"></div>
+                    <div class="heart"></div>
+                    <div class="heart"></div>
+                </div>
+            </div>
+        </div>
+
+        <div class="game-screen">
+            <canvas id="gameCanvas"></canvas>
+            
+            <div class="speed-indicator" id="speedIndicator">🚀 Tốc độ tăng!</div>
+            
+            <div class="controls-overlay">
+                <div class="control-section vertical-controls">
+                    <div class="control-btn" id="upBtn">↑</div>
+                    <div class="control-btn" id="downBtn">↓</div>
+                </div>
+                <div class="control-section horizontal-controls">
+                    <div class="control-btn" id="leftBtn">←</div>
+                    <div class="control-btn" id="rightBtn">→</div>
+                </div>
+            </div>
+            
+            <div id="startScreen">
+                <div class="screen-title">🐼 GẤU TRÚC LEO TRE 🎋</div>
+                <div class="screen-subtitle">Tránh bọ dừa và sống càng lâu càng tốt!</div>
+                <div class="game-instructions">
+                    <div class="instruction-item">🐞 Tránh bọ dừa đỏ từ dưới</div>
+                    <div class="instruction-item">⏱️ Làm chậm thời gian</div>
+                    <div class="instruction-item">💣 Phá hủy bọ dừa</div>
+                    <div class="instruction-item">🎋 Tăng tốc độ gấu</div>
+                    <div class="instruction-item" style="background: rgba(255, 235, 59, 0.5); margin-top: 12px;">
+                        ⚡ Điểm = Giây sống × 10
+                    </div>
+                    <div class="instruction-item" style="background: rgba(255, 87, 34, 0.3);">
+                        🔥 Bọ càng lúc càng nhanh!
+                    </div>
+                </div>
+                <button class="btn" onclick="startGame()">BẮT ĐẦU CHƠI</button>
+            </div>
+
+            <div id="gameOverScreen" class="hidden">
+                <div class="screen-title">GAME OVER</div>
+                <div class="final-score">
+                    🕐 Thời gian: <span id="finalTime">0</span>s<br>
+                    ⭐ Điểm: <span id="finalScore">0</span><br>
+                    🚀 Tốc độ đạt: <span id="finalSpeed">1</span>x
+                </div>
+                <button class="btn" onclick="restartGame()">CHƠI LẠI</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const canvas = document.getElementById('gameCanvas');
+        const ctx = canvas.getContext('2d');
+        
+        function resizeCanvas() {
+            canvas.width = window.innerWidth > 768 ? 480 : window.innerWidth;
+            canvas.height = canvas.parentElement.clientHeight;
+        }
+        resizeCanvas();
+        window.addEventListener('resize', resizeCanvas);
+
+        let gameRunning = false;
+        let score = 0;
+        let gameTimeSeconds = 0;
+        let lives = 3;
+        let baseSpeed = 1.5;
+        let currentSpeedMultiplier = 1;
+        let speedBoost = 1;
+        let slowMotion = 1;
+        let lastScoreUpdate = Date.now();
+        let invulnerable = false;
+        let invulnerableTimer = 0;
+        
+        const panda = {
+            column: 1,
+            targetColumn: 1,
+            x: 0,
+            y: 300,
+            targetY: 300,
+            moveSpeed: 0.18,
+            animationFrame: 0,
+            direction: 0
+        };
+
+        let beetles = [];
+        let items = [];
+        let explosions = [];
+        let particles = [];
+
+        const bambooColumns = [{ x: 0 }, { x: 0 }, { x: 0 }];
+
+        const itemTypes = {
+            SLOW: { emoji: '⏱️', color: '#4dd0e1', effect: 'slow' },
+            BOMB: { emoji: '💣', color: '#ff7043', effect: 'bomb' },
+            BAMBOO: { emoji: '🎋', color: '#81c784', effect: 'speed' }
+        };
+
+        // Touch controls
+        let touchStartX = 0;
+        let touchStartY = 0;
+        let isSwiping = false;
+
+        canvas.addEventListener('touchstart', (e) => {
+            e.preventDefault();
+            if (!gameRunning) return;
+            touchStartX = e.touches[0].clientX;
+            touchStartY = e.touches[0].clientY;
+            isSwiping = true;
+        }, { passive: false });
+
+        canvas.addEventListener('touchmove', (e) => {
+            e.preventDefault();
+            if (!gameRunning || !isSwiping) return;
+            
+            const touchX = e.touches[0].clientX;
+            const touchY = e.touches[0].clientY;
+            const deltaX = touchX - touchStartX;
+            const deltaY = touchY - touchStartY;
+            
+            // Continuous movement while swiping
+            if (Math.abs(deltaX) > Math.abs(deltaY)) {
+                if (deltaX > 20) {
+                    if (panda.targetColumn < 2) {
+                        panda.targetColumn = Math.min(2, panda.column + 1);
+                        panda.direction = 1;
+                    }
+                } else if (deltaX < -20) {
+                    if (panda.targetColumn > 0) {
+                        panda.targetColumn = Math.max(0, panda.column - 1);
+                        panda.direction = -1;
+                    }
+                }
+            } else {
+                if (deltaY > 15) {
+                    panda.targetY = Math.min(panda.targetY + 3, canvas.height - 100);
+                } else if (deltaY < -15) {
+                    panda.targetY = Math.max(panda.targetY - 3, 80);
+                }
+            }
+        }, { passive: false });
+
+        canvas.addEventListener('touchend', (e) => {
+            e.preventDefault();
+            isSwiping = false;
+        }, { passive: false });
+
+        // Button controls
+        document.getElementById('upBtn').addEventListener('touchstart', (e) => {
+            e.preventDefault();
+            if (gameRunning) panda.targetY = Math.max(panda.targetY - 70, 80);
+        });
+
+        document.getElementById('downBtn').addEventListener('touchstart', (e) => {
+            e.preventDefault();
+            if (gameRunning) panda.targetY = Math.min(panda.targetY + 70, canvas.height - 100);
+        });
+
+        document.getElementById('leftBtn').addEventListener('touchstart', (e) => {
+            e.preventDefault();
+            if (gameRunning && panda.targetColumn > 0) {
+                panda.targetColumn--;
+                panda.direction = -1;
+            }
+        });
+
+        document.getElementById('rightBtn').addEventListener('touchstart', (e) => {
+            e.preventDefault();
+            if (gameRunning && panda.targetColumn < 2) {
+                panda.targetColumn++;
+                panda.direction = 1;
+            }
+        });
+
+        // Keyboard controls
+        document.addEventListener('keydown', (e) => {
+            if (!gameRunning) return;
+            
+            if (e.key === 'ArrowLeft' && panda.targetColumn > 0) {
+                panda.targetColumn--;
+                panda.direction = -1;
+            } else if (e.key === 'ArrowRight' && panda.targetColumn < 2) {
+                panda.targetColumn++;
+                panda.direction = 1;
+            } else if (e.key === 'ArrowUp') {
+                panda.targetY = Math.max(panda.targetY - 60, 80);
+            } else if (e.key === 'ArrowDown') {
+                panda.targetY = Math.min(panda.targetY + 60, canvas.height - 100);
+            }
+        });
+
+        function drawBamboo() {
+            bambooColumns.forEach((col, index) => {
+                col.x = canvas.width * (0.25 + index * 0.25);
+                
+                // Bamboo stem
+                ctx.fillStyle = '#a5d6a7';
+                ctx.fillRect(col.x - 12, 0, 24, canvas.height);
+                
+                // Darker edge
+                ctx.fillStyle = '#81c784';
+                ctx.fillRect(col.x - 12, 0, 4, canvas.height);
+                ctx.fillRect(col.x + 8, 0, 4, canvas.height);
+                
+                // Segments
+                ctx.strokeStyle = '#66bb6a';
+                ctx.lineWidth = 3;
+                for (let y = 0; y < canvas.height; y += 70) {
+                    ctx.beginPath();
+                    ctx.moveTo(col.x - 12, y);
+                    ctx.lineTo(col.x + 12, y);
+                    ctx.stroke();
+                }
+                
+                // Leaves
+                ctx.fillStyle = '#c8e6c9';
+                for (let y = 35; y < canvas.height; y += 110) {
+                    ctx.beginPath();
+                    ctx.ellipse(col.x - 22, y, 18, 7, -Math.PI / 3, 0, Math.PI * 2);
+                    ctx.fill();
+                    
+                    ctx.beginPath();
+                    ctx.ellipse(col.x + 22, y + 18, 18, 7, Math.PI / 3, 0, Math.PI * 2);
+                    ctx.fill();
+                }
+            });
+        }
+
+        function drawPanda() {
+            const targetX = bambooColumns[panda.targetColumn].x;
+            
+            panda.x += (targetX - panda.x) * panda.moveSpeed;
+            panda.y += (panda.targetY - panda.y) * panda.moveSpeed;
+            
+            const x = panda.x;
+            const y = panda.y;
+            
+            panda.animationFrame += 0.12;
+            const bounce = Math.sin(panda.animationFrame) * 2.5;
+            
+            if (invulnerable) {
+                const flash = Math.floor(panda.animationFrame * 10) % 2 === 0;
+                if (!flash) ctx.globalAlpha = 0.4;
+            }
+            
+            // Shadow
+            ctx.fillStyle = 'rgba(0, 0, 0, 0.15)';
+            ctx.beginPath();
+            ctx.ellipse(x, y + 48, 26, 8, 0, 0, Math.PI * 2);
+            ctx.fill();
+            
+            // Body
+            ctx.fillStyle = '#ffffff';
+            ctx.beginPath();
+            ctx.ellipse(x, y + 16 + bounce, 25, 32, 0, 0, Math.PI * 2);
+            ctx.fill();
+            
+            ctx.strokeStyle = '#e8f5e9';
+            ctx.lineWidth = 2;
+            ctx.stroke();
+            
+            // Arms
+            const armSwing = Math.sin(panda.animationFrame) * 0.12;
+            ctx.fillStyle = '#2e2e2e';
+            
+            ctx.save();
+            ctx.translate(x - 19, y + 12 + bounce);
+            ctx.rotate(-0.35 + armSwing);
+            ctx.beginPath();
+            ctx.ellipse(0, 0, 9, 23, 0, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.restore();
+            
+            ctx.save();
+            ctx.translate(x + 19, y + 12 + bounce);
+            ctx.rotate(0.35 - armSwing);
+            ctx.beginPath();
+            ctx.ellipse(0, 0, 9, 23, 0, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.restore();
+            
+            // Legs
+            ctx.fillStyle = '#2e2e2e';
+            ctx.beginPath();
+            ctx.ellipse(x - 11, y + 40 + bounce, 10, 14, 0, 0, Math.PI * 2);
+            ctx.fill();
+            
+            ctx.beginPath();
+            ctx.ellipse(x + 11, y + 40 + bounce, 10, 14, 0, 0, Math.PI * 2);
+            ctx.fill();
+            
+            // Head
+            ctx.fillStyle = '#ffffff';
+            ctx.beginPath();
+            ctx.arc(x, y - 8 + bounce * 0.5, 21, 0, Math.PI * 2);
+            ctx.fill();
+            
+            ctx.strokeStyle = '#e8f5e9';
+            ctx.lineWidth = 2;
+            ctx.stroke();
+            
+            // Ears
+            ctx.fillStyle = '#2e2e2e';
+            ctx.beginPath();
+            ctx.arc(x - 14, y - 21 + bounce * 0.5, 9, 0, Math.PI * 2);
+            ctx.fill();
+            
+            ctx.beginPath();
+            ctx.arc(x + 14, y - 21 + bounce * 0.5, 9, 0, Math.PI * 2);
+            ctx.fill();
+            
+            // Eye patches
+            ctx.beginPath();
+            ctx.ellipse(x - 10, y - 8 + bounce * 0.5, 7, 9, 0, 0, Math.PI * 2);
+            ctx.fill();
+            
+            ctx.beginPath();
+            ctx.ellipse(x + 10, y - 8 + bounce * 0.5, 7, 9, 0, 0, Math.PI * 2);
+            ctx.fill();
+            
+            // Eyes
+            ctx.fillStyle = '#ffffff';
+            ctx.beginPath();
+            ctx.arc(x - 10, y - 8 + bounce * 0.5, 4, 0, Math.PI * 2);
+            ctx.fill();
+            
+            ctx.beginPath();
+            ctx.arc(x + 10, y - 8 + bounce * 0.5, 4, 0, Math.PI * 2);
+            ctx.fill();
+            
+            // Pupils
+            const pupilOffset = panda.direction * 1.5;
+            ctx.fillStyle = '#000000';
+            ctx.beginPath();
+            ctx.arc(x - 10 + pupilOffset, y - 8 + bounce * 0.5, 2.5, 0, Math.PI * 2);
+            ctx.fill();
+            
+            ctx.beginPath();
+            ctx.arc(x + 10 + pupilOffset, y - 8 + bounce * 0.5, 2.5, 0, Math.PI * 2);
+            ctx.fill();
+            
+            // Nose
+            ctx.fillStyle = '#2e2e2e';
+            ctx.beginPath();
+            ctx.ellipse(x, y - 2 + bounce * 0.5, 5, 4, 0, 0, Math.PI * 2);
+            ctx.fill();
+            
+            // Mouth
+            ctx.strokeStyle = '#2e2e2e';
+            ctx.lineWidth = 2;
+            ctx.beginPath();
+            ctx.arc(x, y + 1 + bounce * 0.5, 7, 0.1, Math.PI - 0.1);
+            ctx.stroke();
+            
+            ctx.globalAlpha = 1;
+            
+            if (Math.abs(panda.x - targetX) < 5) {
+                panda.column = panda.targetColumn;
+                panda.direction = 0;
+            }
+        }
+
+        function spawnBeetle() {
+            const column = Math.floor(Math.random() * 3);
+            const currentSpeed = baseSpeed * currentSpeedMultiplier * slowMotion;
+            
+            beetles.push({
+                column: column,
+                y: canvas.height + 30,
+                realY: canvas.height + 30,
+                speed: currentSpeed,
+                animFrame: Math.random() * Math.PI * 2,
+                wiggle: Math.random() * 0.5 + 0.5
+            });
+        }
+
+        function spawnItem() {
+            const column = Math.floor(Math.random() * 3);
+            const typeKeys = Object.keys(itemTypes);
+            const type = typeKeys[Math.floor(Math.random() * typeKeys.length)];
+            
+            items.push({
+                column: column,
+                y: canvas.height + 30,
+                realY: canvas.height + 30,
+                type: type,
+                speed: (baseSpeed * currentSpeedMultiplier * 0.7) * slowMotion,
+                rotation: 0,
+                scale: 1
+            });
+        }
+
+        function drawBeetle(beetle) {
+            const x = bambooColumns[beetle.column].x;
+            const y = beetle.realY;
+            
+            beetle.animFrame += 0.16;
+            const wiggle = Math.sin(beetle.animFrame * beetle.wiggle) * 3.5;
+            const legMove = Math.sin(beetle.animFrame * 2) * 2.5;
+            
+            ctx.save();
+            ctx.translate(x + wiggle, y);
+            
+            // Shadow
+            ctx.fillStyle = 'rgba(0, 0, 0, 0.2)';
+            ctx.beginPath();
+            ctx.ellipse(0, 16, 16, 6, 0, 0, Math.PI * 2);
+            ctx.fill();
+            
+            // Body
+            ctx.fillStyle = '#d32f2f';
+            ctx.beginPath();
+            ctx.ellipse(0, 0, 14, 17, 0, 0, Math.PI * 2);
+            ctx.fill();
+            
+            // Shine
+            ctx.fillStyle = 'rgba(255, 255, 255, 0.35)';
+            ctx.beginPath();
+            ctx.ellipse(-4, -6, 6, 8, -0.3, 0, Math.PI * 2);
+            ctx.fill();
+            
+            // Head
+            ctx.fillStyle = '#b71c1c';
+            ctx.beginPath();
+            ctx.arc(0, -14, 10, 0, Math.PI * 2);
+            ctx.fill();
+            
+            // Antennae
+            ctx.strokeStyle = '#b71c1c';
+            ctx.lineWidth = 2.5;
+            ctx.beginPath();
+            ctx.moveTo(-5, -19);
+            ctx.lineTo(-8, -27);
+            ctx.stroke();
+            
+            ctx.beginPath();
+            ctx.moveTo(5, -19);
+            ctx.lineTo(8, -27);
+            ctx.stroke();
+            
+            ctx.fillStyle = '#b71c1c';
+            ctx.beginPath();
+            ctx.arc(-8, -27, 2.5, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.beginPath();
+            ctx.arc(8, -27, 2.5, 0, Math.PI * 2);
+            ctx.fill();
+            
+            // Spots
+            ctx.fillStyle = '#000000';
+            ctx.beginPath();
+            ctx.arc(-6, -4, 4, 0, Math.PI * 2);
+            ctx.fill();
+            
+            ctx.beginPath();
+            ctx.arc(6, -4, 4, 0, Math.PI * 2);
+            ctx.fill();
+            
+            ctx.beginPath();
+            ctx.arc(0, 7, 4, 0, Math.PI * 2);
+            ctx.fill();
+            
+            // Legs
+            ctx.strokeStyle = '#8b0000';
+            ctx.lineWidth = 3;
+            
+            for (let i = -1; i <= 1; i++) {
+                ctx.beginPath();
+                ctx.moveTo(-12, i * 7);
+                ctx.lineTo(-18, i * 7 + 5 + legMove);
+                ctx.stroke();
+                
+                ctx.beginPath();
+                ctx.moveTo(12, i * 7);
+                ctx.lineTo(18, i * 7 + 5 - legMove);
+                ctx.stroke();
+            }
+            
+            ctx.restore();
+        }
+
+        function drawItem(item) {
+            const x = bambooColumns[item.column].x;
+            const y = item.realY;
+            const itemData = itemTypes[item.type];
+            
+            item.rotation += 0.04;
+            item.scale = 1 + Math.sin(item.rotation * 3) * 0.12;
+            
+            ctx.save();
+            ctx.translate(x, y);
+            ctx.rotate(item.rotation);
+            ctx.scale(item.scale, item.scale);
+            
+            // Glow
+            const gradient = ctx.createRadialGradient(0, 0, 5, 0, 0, 28);
+            gradient.addColorStop(0, itemData.color);
+            gradient.addColorStop(1, 'transparent');
+            ctx.fillStyle = gradient;
+            ctx.beginPath();
+            ctx.arc(0, 0, 28, 0, Math.PI * 2);
+            ctx.fill();
+            
+            // Background
+            ctx.fillStyle = itemData.color;
+            ctx.globalAlpha = 0.5;
+            ctx.beginPath();
+            ctx.arc(0, 0, 22, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.globalAlpha = 1;
+            
+            // White border
+            ctx.strokeStyle = 'rgba(255, 255, 255, 0.6)';
+            ctx.lineWidth = 2;
+            ctx.stroke();
+            
+            // Emoji
+            ctx.font = '34px Arial';
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            ctx.fillText(itemData.emoji, 0, 0);
+            
+            ctx.restore();
+        }
+
+        function createParticles(x, y, color, count) {
+            for (let i = 0; i < count; i++) {
+                particles.push({
+                    x: x,
+                    y: y,
+                    vx: (Math.random() - 0.5) * 10,
+                    vy: (Math.random() - 0.5) * 10,
+                    color: color,
+                    life: 1,
+                    size: Math.random() * 6 + 3
+                });
+            }
+        }
+
+        function drawParticle(particle) {
+            ctx.fillStyle = particle.color;
+            ctx.globalAlpha = particle.life;
+            ctx.beginPath();
+            ctx.arc(particle.x, particle.y, particle.size, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.globalAlpha = 1;
+        }
+
+        function drawExplosion(explosion) {
+            ctx.fillStyle = `rgba(244, 67, 54, ${explosion.alpha})`;
+            ctx.beginPath();
+            ctx.arc(explosion.x, explosion.y, explosion.radius, 0, Math.PI * 2);
+            ctx.fill();
+            
+            ctx.fillStyle = `rgba(255, 235, 59, ${explosion.alpha})`;
+            ctx.beginPath();
+            ctx.arc(explosion.x, explosion.y, explosion.radius * 0.65, 0, Math.PI * 2);
+            ctx.fill();
+            
+            ctx.strokeStyle = `rgba(255, 255, 255, ${explosion.alpha * 0.8})`;
+            ctx.lineWidth = 4;
+            ctx.beginPath();
+            ctx.arc(explosion.x, explosion.y, explosion.radius * 0.85, 0, Math.PI * 2);
+            ctx.stroke();
+        }
+
+        function updatePanda() {
+            if (invulnerable) {
+                invulnerableTimer--;
+                if (invulnerableTimer <= 0) {
+                    invulnerable = false;
+                }
+            }
+        }
+
+        function updateBeetles() {
+            beetles.forEach((beetle, index) => {
+                beetle.realY -= beetle.speed;
+                beetle.y = beetle.realY;
+                
+                if (!invulnerable && beetle.column === panda.column) {
+                    const beetleX = bambooColumns[beetle.column].x;
+                    const distance = Math.sqrt(
+                        Math.pow(panda.x - beetleX, 2) + 
+                        Math.pow(panda.y - beetle.y, 2)
+                    );
+                    
+                    if (distance < 42) {
+                        loseLife();
+                        createParticles(panda.x, panda.y, '#ffcdd2', 18);
+                        beetles.splice(index, 1);
+                        return;
+                    }
+                }
+                
+                if (beetle.y < -50) {
+                    beetles.splice(index, 1);
+                }
+            });
+        }
+
+        function updateItems() {
+            items.forEach((item, index) => {
+                item.realY -= item.speed;
+                item.y = item.realY;
+                
+                if (item.column === panda.column) {
+                    const itemX = bambooColumns[item.column].x;
+                    const distance = Math.sqrt(
+                        Math.pow(panda.x - itemX, 2) + 
+                        Math.pow(panda.y - item.y, 2)
+                    );
+                    
+                    if (distance < 48) {
+                        collectItem(item);
+                        createParticles(panda.x, panda.y, itemTypes[item.type].color, 22);
+                        items.splice(index, 1);
+                        return;
+                    }
+                }
+                
+                if (item.y < -50) {
+                    items.splice(index, 1);
+                }
+            });
+        }
+
+        function updateParticles() {
+            particles.forEach((particle, index) => {
+                particle.x += particle.vx;
+                particle.y += particle.vy;
+                particle.vy += 0.35;
+                particle.life -= 0.025;
+                
+                if (particle.life <= 0) {
+                    particles.splice(index, 1);
+                }
+            });
+        }
+
+        function updateExplosions() {
+            explosions.forEach((explosion, index) => {
+                explosion.radius += 5;
+                explosion.alpha -= 0.03;
+                
+                if (explosion.alpha <= 0) {
+                    explosions.splice(index, 1);
+                }
+            });
+        }
+
+        function collectItem(item) {
+            const itemData = itemTypes[item.type];
+            
+            switch(itemData.effect) {
+                case 'slow':
+                    slowMotion = 0.5;
+                    setTimeout(() => { slowMotion = 1; }, 5000);
+                    break;
+                case 'bomb':
+                    const x = bambooColumns[item.column].x;
+                    explosions.push({ x: x, y: item.y, radius: 12, alpha: 1 });
+                    
+                    beetles = beetles.filter(beetle => {
+                        if (beetle.column === item.column) {
+                            createParticles(bambooColumns[beetle.column].x, beetle.y, '#d32f2f', 12);
+                            return false;
+                        }
+                        return true;
+                    });
+                    break;
+                case 'speed':
+                    speedBoost = 1.6;
+                    panda.moveSpeed = 0.28;
+                    setTimeout(() => { 
+                        speedBoost = 1; 
+                        panda.moveSpeed = 0.18;
+                    }, 5000);
+                    break;
+            }
+            
+            score += 50;
+        }
+
+        function loseLife() {
+            if (invulnerable) return;
+            
+            lives--;
+            updateLivesDisplay();
+            
+            invulnerable = true;
+            invulnerableTimer = 100;
+            
+            if (lives <= 0) {
+                gameOver();
+            }
+        }
+
+        function showSpeedIndicator() {
+            const indicator = document.getElementById('speedIndicator');
+            indicator.classList.add('show');
+            setTimeout(() => {
+                indicator.classList.remove('show');
+            }, 2000);
+        }
+
+        function updateScore() {
+            const now = Date.now();
+            if (now - lastScoreUpdate >= 1000) {
+                gameTimeSeconds++;
+                score = gameTimeSeconds * 10;
+                document.getElementById('score').textContent = score;
+                document.getElementById('time').textContent = gameTimeSeconds + 's';
+                lastScoreUpdate = now;
+                
+                // Speed increases every 10 seconds
+                const newSpeedMultiplier = 1 + Math.floor(gameTimeSeconds / 10) * 0.25;
+                if (newSpeedMultiplier > currentSpeedMultiplier) {
+                    currentSpeedMultiplier = newSpeedMultiplier;
+                    document.getElementById('speed').textContent = currentSpeedMultiplier.toFixed(2) + 'x';
+                    showSpeedIndicator();
+                    createParticles(canvas.width / 2, canvas.height / 2, '#ffeb3b', 35);
+                    
+                    // Update existing beetles speed
+                    beetles.forEach(beetle => {
+                        beetle.speed = baseSpeed * currentSpeedMultiplier * slowMotion;
+                    });
+                }
+            }
+        }
+
+        function updateLivesDisplay() {
+            const livesContainer = document.getElementById('lives');
+            livesContainer.innerHTML = '';
+            for (let i = 0; i < lives; i++) {
+                const heart = document.createElement('div');
+                heart.className = 'heart';
+                livesContainer.appendChild(heart);
+            }
+        }
+
+        function gameLoop() {
+            if (!gameRunning) return;
+            
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            
+            drawBamboo();
+            
+            updatePanda();
+            updateBeetles();
+            updateItems();
+            updateParticles();
+            updateExplosions();
+            updateScore();
+            
+            beetles.forEach(drawBeetle);
+            items.forEach(drawItem);
+            explosions.forEach(drawExplosion);
+            particles.forEach(drawParticle);
+            
+            drawPanda();
+            
+            requestAnimationFrame(gameLoop);
+        }
+
+        let beetleSpawnInterval;
+        let itemSpawnInterval;
+
+        function startGame() {
+            document.getElementById('startScreen').classList.add('hidden');
+            gameRunning = true;
+            score = 0;
+            gameTimeSeconds = 0;
+            lives = 3;
+            currentSpeedMultiplier = 1;
+            speedBoost = 1;
+            slowMotion = 1;
+            invulnerable = false;
+            invulnerableTimer = 0;
+            panda.y = canvas.height / 2;
+            panda.targetY = canvas.height / 2;
+            panda.column = 1;
+            panda.targetColumn = 1;
+            panda.x = bambooColumns[1].x;
+            panda.direction = 0;
+            beetles = [];
+            items = [];
+            explosions = [];
+            particles = [];
+            lastScoreUpdate = Date.now();
+            
+            document.getElementById('score').textContent = '0';
+            document.getElementById('time').textContent = '0s';
+            document.getElementById('speed').textContent = '1.00x';
+            updateLivesDisplay();
+            
+            if (beetleSpawnInterval) clearInterval(beetleSpawnInterval);
+            if (itemSpawnInterval) clearInterval(itemSpawnInterval);
+            
+            beetleSpawnInterval = setInterval(() => {
+                if (gameRunning) {
+                    spawnBeetle();
+                }
+            }, 1700);
+            
+            itemSpawnInterval = setInterval(() => {
+                if (gameRunning && Math.random() > 0.45) {
+                    spawnItem();
+                }
+            }, 4000);
+            
+            gameLoop();
+        }
+
+        function gameOver() {
+            gameRunning = false;
+            clearInterval(beetleSpawnInterval);
+            clearInterval(itemSpawnInterval);
+            document.getElementById('finalScore').textContent = score;
+            document.getElementById('finalTime').textContent = gameTimeSeconds;
+            document.getElementById('finalSpeed').textContent = currentSpeedMultiplier.toFixed(2);
+            document.getElementById('gameOverScreen').classList.remove('hidden');
+        }
+
+        function restartGame() {
+            document.getElementById('gameOverScreen').classList.add('hidden');
+            startGame();
+        }
+
+        // Initial draw
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        drawBamboo();
+        panda.x = canvas.width / 2;
+        panda.y = canvas.height / 2;
+        drawPanda();
+    </script>
+</body>
+</html>
